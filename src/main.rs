@@ -1,10 +1,8 @@
 mod args;
 mod name;
-
-struct S(u32, u8);
+mod parse;
 
 fn main() {
-    println!("Hello, world!");
-    let f: bool = args::YEAR == "-Y";
-    println!("{}", f);
+	println!("Hello, world!");
+	parse::test();
 }
