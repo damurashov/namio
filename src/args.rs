@@ -1,5 +1,4 @@
 use core::cmp::PartialEq;
-use crate::name;
 
 pub struct Args<'a>(&'a str, &'a str, &'a str, &'a str);
 
@@ -19,6 +18,10 @@ impl<'a> Args<'a> {
 	fn as_short_modified(&self) -> &str {
 		&self.3
 	}
+
+	fn is_modified(&self, s: &str) -> bool {
+		self.2 == s || self.3 == s
+	}
 }
 
 impl<'a> PartialEq for Args<'a> {
@@ -33,13 +36,8 @@ impl<'a> PartialEq<&str> for Args<'a> {
 	}
 }
 
-pub static YEAR: Args = Args("--year", "-y", "--Year", "-Y");
-pub static LABEL: Args = Args("--label", "-l", "--Label", "-L");
-pub static DATE: Args = Args("--date", "-d", "", "");
+pub const YEAR: &'static Args = &Args("--year", "-y", "--Year", "-Y");
+pub const LABEL: &'static Args = &Args("--label", "-l", "--Label", "-L");
+pub const DATE: &'static Args = &Args("--date", "-d", "", "");
 
-pub mod re {
-	const YEAR: &'static str = r"[0-9]{4}";
-	const LABEL: &'static str = r"[A-Z]{2,}";
-	const WORD: &'static str = r"[0-9a-zA-Z]+";
-	const SEPARATOR: &'static str = r"[_-\s]";
-}
+pub const ALL: [&Args; 3] = [&YEAR, &LABEL, &DATE];
