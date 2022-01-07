@@ -1,9 +1,5 @@
-use std::vec::Vec;
-use crate::args;
 use regex::{Regex, Match, Matches};
-use env;
-use std::iter::{Iterator, IntoIterator, Peekable};
-use std::collections::LinkedList;
+use std::iter::{Iterator, Peekable};
 
 mod re {
 	use lazy_static::lazy_static;
@@ -18,7 +14,7 @@ mod re {
 }
 
 #[derive(Clone, Copy)]
-enum Parsed<'a> {
+pub enum Parsed<'a> {
 	Text(&'a str),
 	Year(&'a str),
 	Label(&'a str),
@@ -31,7 +27,7 @@ struct SetMatches<'t, 'a> {
 	delimiter: Peekable<Matches<'t, 'a>>,
 }
 
-struct ReStrIterator<'t, 'a> {
+pub struct ReStrIterator<'t, 'a> {
 	wrapped: &'a str,
 	pos: usize,
 	set_matches: SetMatches<'t, 'a>,
@@ -113,22 +109,11 @@ impl<'t, 'a> Iterator for ReStrIterator<'t, 'a> {
 	}
 }
 
-struct StrWrapped<'a>(&'a str);  // Regex-iterable string
-
-impl<'a> IntoIterator for StrWrapped<'a> {
-	type Item = <ReStrIterator<'static, 'a> as Iterator>::Item;
-	type IntoIter = ReStrIterator<'static, 'a>;
-
-	fn into_iter(self) -> Self::IntoIter {
-		Self::IntoIter::new(&self.0)
-	}
-}
-
 pub fn test() {
 	let s = "there2010.echoLABEL";
 	// let s = "";
 
-	for m in StrWrapped(s) {
+	for m in ReStrIterator::new(s) {
 		match m {
 			Parsed::Year(s) => println!("Year: {}", s),
 			Parsed::Text(s) => println!("Generic text: {}", s),
