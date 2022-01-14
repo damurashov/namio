@@ -2,18 +2,6 @@ use regex::{Regex, Match, Matches};
 use std::iter::{Iterator, Peekable};
 use std::cmp::PartialEq;
 
-mod re {
-	use lazy_static::lazy_static;
-	use regex::{Regex};
-
-	lazy_static! {
-		pub static ref DELIMITER: Regex = Regex::new(r"\s|\.|-").unwrap();
-		pub static ref LABEL: Regex = Regex::new(r"[[:upper:]]{2,}").unwrap();
-		pub static ref NUMBER: Regex = Regex::new(r"[[:digit:]]+").unwrap();
-		pub static ref YEAR: Regex = Regex::new(r"(19|20)[\d]{2,2}").unwrap();
-	}
-}
-
 pub mod arg {
 	pub struct Arg<'a>(&'a str, &'a str);
 
@@ -25,7 +13,19 @@ pub mod arg {
 
 	pub static YEAR: Arg = Arg("-y", "--year");
 	pub static LABEL: Arg = Arg("-l", "--label");
-	pub static ALL: [&str; 4] = [YEAR.0, YEAR.1, LABEL.0, LABEL.1];
+	pub static ALL: &[&str] = &[YEAR.0, YEAR.1, LABEL.0, LABEL.1];
+}
+
+mod re {
+	use lazy_static::lazy_static;
+	use regex::{Regex};
+
+	lazy_static! {
+		pub static ref DELIMITER: Regex = Regex::new(r"\s|\.|-").unwrap();
+		pub static ref LABEL: Regex = Regex::new(r"[[:upper:]]{2,}").unwrap();
+		pub static ref NUMBER: Regex = Regex::new(r"[[:digit:]]+").unwrap();
+		pub static ref YEAR: Regex = Regex::new(r"(19|20)[\d]{2,2}").unwrap();
+	}
 }
 
 #[derive(Clone, Copy)]
@@ -67,7 +67,7 @@ impl<'t, 'a> ReStrIterator<'t, 'a> {
 		match (current.peek(), candidate.peek()) {
 			(_, None) => false,
 			(None, _) => true,
-			(Some(cur), Some(cand)) => cur.start() > cand.start(),
+			(Some(cur), Some(cand)) => cur.start() >= cand.start(),
 		}
 	}
 
@@ -106,14 +106,14 @@ impl<'t, 'a> Iterator for ReStrIterator<'t, 'a> {
 			if let Some(_) = &ret {
 				let f_current_pos = next.peek().unwrap().start() == self.pos;
 
-				if f_current_pos {
+				if f_current_pos {  // Match is on the current position
 					self.pos = next.next().unwrap().end();
-				} else {
+				} else {  // Match is further than the current position, up until the string is interpreted as a text
 					let npos = next.peek().unwrap().start();
 					ret = Some(Text(&self.wrapped[self.pos..npos]));
 					self.pos = npos;
 				}
-			} else {
+			} else {  // No matches ahead, the whole string is interpreted as a text
 				ret = Some(Text(&self.wrapped[self.pos..]));
 				self.pos = self.wrapped.len();
 			}
