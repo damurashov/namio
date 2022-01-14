@@ -1,5 +1,6 @@
 use regex::{Regex, Match, Matches};
 use std::iter::{Iterator, Peekable};
+use std::cmp::PartialEq;
 
 mod re {
 	use lazy_static::lazy_static;
@@ -13,12 +14,27 @@ mod re {
 	}
 }
 
+pub mod arg {
+	pub struct Arg<'a>(&'a str, &'a str);
+
+	impl<'a> PartialEq<str> for Arg<'a> {
+		fn eq(&self, other: &str) -> bool {
+			self.0 == other || self.1 == other
+		}
+	}
+
+	pub static YEAR: Arg = Arg("-y", "--year");
+	pub static LABEL: Arg = Arg("-l", "--label");
+	pub static ALL: [&str; 4] = [YEAR.0, YEAR.1, LABEL.0, LABEL.1];
+}
+
 #[derive(Clone, Copy)]
 pub enum Parsed<'a> {
 	Text(&'a str),
 	Year(&'a str),
 	Label(&'a str),
 	Delimiter(&'a str),
+	Arg(&'a str),
 }
 
 struct SetMatches<'t, 'a> {
@@ -119,6 +135,7 @@ pub fn test() {
 			Parsed::Text(s) => println!("Generic text: {}", s),
 			Parsed::Delimiter(s) => println!("Delimiter: {}", s),
 			Parsed::Label(s) => println!("Label: {}", s),
+			_ => {},
 		}
 	}
 }

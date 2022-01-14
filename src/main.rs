@@ -1,5 +1,3 @@
-mod args;
-mod name;
 mod parse;
 
 fn main() {
