@@ -19,12 +19,32 @@ pub mod arg {
 mod re {
 	use lazy_static::lazy_static;
 	use regex::{Regex};
+	use super::arg;
 
 	lazy_static! {
 		pub static ref DELIMITER: Regex = Regex::new(r"\s|\.|-").unwrap();
 		pub static ref LABEL: Regex = Regex::new(r"[[:upper:]]{2,}").unwrap();
 		pub static ref NUMBER: Regex = Regex::new(r"[[:digit:]]+").unwrap();
 		pub static ref YEAR: Regex = Regex::new(r"(19|20)[\d]{2,2}").unwrap();
+		pub static ref ARG: Regex = {
+			let overall_len = arg::ALL.iter().map(|&s| s.len()).sum::<usize>();
+			let mut s = String::new();
+
+			s.reserve_exact((arg::ALL.len() - 1) * overall_len * arg::ALL.len() * 2);
+
+			s.push_str("(");
+			s.push_str(arg::ALL[0]);
+			s.push_str(")");
+
+			let slice = &arg::ALL[1..];
+			for &i in slice {
+				s.push_str("|(");
+				s.push_str(i);
+				s.push_str(")");
+			}
+
+			Regex::new(s.as_str()).unwrap()
+		};
 	}
 }
 
