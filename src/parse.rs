@@ -61,6 +61,7 @@ struct SetMatches<'t, 'a> {
 	year: Peekable<Matches<'t, 'a>>,
 	label: Peekable<Matches<'t, 'a>>,
 	delimiter: Peekable<Matches<'t, 'a>>,
+	arg: Peekable<Matches<'t, 'a>>,
 }
 
 pub struct ReStrIterator<'t, 'a> {
@@ -79,15 +80,20 @@ impl<'t, 'a> ReStrIterator<'t, 'a> {
 				year: re::NUMBER.find_iter(s).peekable(),
 				label: re::LABEL.find_iter(s).peekable(),
 				delimiter: re::DELIMITER.find_iter(s).peekable(),
+				arg: re::ARG.find_iter(s).peekable(),
 			},
 		}
 	}
 
-	fn is_closer_match(current: &mut Peekable<Matches<'t, 'a>>, candidate: &mut Peekable<Matches<'t, 'a>>) -> bool {
+	fn is_closer_match(pos: usize, current: &mut Peekable<Matches<'t, 'a>>, candidate: &mut Peekable<Matches<'t, 'a>>) -> bool {
 		match (current.peek(), candidate.peek()) {
 			(_, None) => false,
-			(None, _) => true,
-			(Some(cur), Some(cand)) => cur.start() >= cand.start(),
+			(None, Some(cand)) => {
+				cand.start() >= pos
+			},
+			(Some(cur), Some(cand)) => {
+				cur.start() >= cand.start() && cand.start() >= pos
+			}
 		}
 	}
 
@@ -113,13 +119,18 @@ impl<'t, 'a> Iterator for ReStrIterator<'t, 'a> {
 				}
 			}
 
-			if ReStrIterator::is_closer_match(next, &mut self.set_matches.label) {
+			if ReStrIterator::is_closer_match(self.pos, next, &mut self.set_matches.label) {
 				next = &mut self.set_matches.label;
 				ret = Some(Label(next.peek().unwrap().as_str()));
 			}
 
-			if ReStrIterator::is_closer_match(next, &mut self.set_matches.delimiter) {
+			if ReStrIterator::is_closer_match(self.pos, next, &mut self.set_matches.delimiter) {
 				next = &mut self.set_matches.delimiter;
+				ret = Some(Delimiter(next.peek().unwrap().as_str()));
+			}
+
+			if ReStrIterator::is_closer_match(self.pos, next, &mut self.set_matches.arg) {
+				next = &mut self.set_matches.arg;
 				ret = Some(Delimiter(next.peek().unwrap().as_str()));
 			}
 
